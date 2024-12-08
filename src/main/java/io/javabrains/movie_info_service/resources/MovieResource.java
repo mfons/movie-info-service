@@ -1,12 +1,13 @@
 package io.javabrains.movie_info_service.resources;
 
+import io.javabrains.movie_info_service.models.Message;
 import io.javabrains.movie_info_service.models.Movie;
 import io.javabrains.movie_info_service.models.MovieSummary;
+import io.javabrains.movie_info_service.producer.ProducerService;
+import org.apache.kafka.clients.producer.Producer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 @RestController
@@ -20,6 +21,10 @@ public class MovieResource {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private ProducerService producerService;
+
+
     @RequestMapping("/{movieId}")
     public Movie getMovieInfo(@PathVariable("movieId") String movieId) {
         MovieSummary movieSummary = restTemplate.getForObject(
@@ -28,5 +33,12 @@ public class MovieResource {
         );
         assert movieSummary != null;
         return new Movie(movieId, movieSummary.title(), movieSummary.overview());
+    }
+
+    @GetMapping("/generate")
+    public String generate (@RequestParam String message,
+                            @RequestParam int age) {
+        producerService.produce(new Message(age, message));
+        return "OK";
     }
 }
